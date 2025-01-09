@@ -35,9 +35,10 @@ navbarLinks.forEach(link => {
 
 // Service Worker registration
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').then(reg => {
-        console.log('Service Worker registered:', reg);
-    }).catch(err => console.error('Service Worker registration failed:', err));
+    navigator.serviceWorker
+        .register('/service-worker.js')
+        .then(() => console.log('Service Worker registered successfully'))
+        .catch((err) => console.error('Service Worker registration failed:', err));
 }
 
 let deferredPrompt;
