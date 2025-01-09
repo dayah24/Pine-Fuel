@@ -25,58 +25,49 @@ const precachedAssets = [
     '/images/team6.jpg',
 ];
 
+// Install event
 self.addEventListener('install', (event) => {
-    console.log("Service Worker: Install Event");
+    console.log('Service Worker: Installed');
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
-            console.log("Service Worker: Precaching App Shell");
-            return cache.addAll(precachedAssets);
-        }).catch((error) => {
-            console.error("Cache addAll failed: ", error);
+            console.log('Service Worker: Caching Files');
+            return cache.addAll(urlsToCache);
         })
     );
 });
 
+// Activate event
 self.addEventListener('activate', (event) => {
-    console.log("Activating new service worker..."); // Debug log
+    console.log('Service Worker: Activated');
+    // Cleanup old caches
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all(
-                cacheNames.map((cacheName) => {
-                    if (cacheName !== CACHE_NAME) {
-                        console.log(`Menghapus cache lama: ${cacheName}`); // Log untuk setiap cache yang dihapus
-                        return caches.delete(cacheName);
+                cacheNames.map((cache) => {
+                    if (cache !== CACHE_NAME) {
+                        console.log('Service Worker: Clearing Old Cache');
+                        return caches.delete(cache);
                     }
                 })
             );
-        }).then(() => {
-            console.log("Cache lama sudah dibersihkan.");
-        }).catch((error) => {
-            console.error("Error during cache deletion:", error);
         })
     );
-    return self.clients.claim();
 });
 
+// Fetch event
 self.addEventListener('fetch', (event) => {
-    // Periksa apakah metode permintaan adalah GET
-    if (event.request.method === 'GET') {
-        event.respondWith(
-            caches.open(CACHE_NAME).then((cache) => {
-                return cache.match(event.request).then((cachedResponse) => {
-                    const fetchPromise = fetch(event.request).then((networkResponse) => {
-                        // Simpan hanya respon GET di cache
-                        cache.put(event.request, networkResponse.clone());
-                        return networkResponse;
-                    });
-                    return cachedResponse || fetchPromise;
+    console.log('Service Worker: Fetching');
+    event.respondWith(
+        fetch(event.request)
+            .then((response) => {
+                const responseClone = response.clone();
+                caches.open(CACHE_NAME).then((cache) => {
+                    cache.put(event.request, responseClone);
                 });
+                return response;
             })
-        );
-    } else {
-        // Untuk permintaan non-GET, langsung fetch tanpa caching
-        event.respondWith(fetch(event.request));
-    }
+            .catch(() => caches.match(event.request))
+    );
 });
 
 self.addEventListener('install', event => {
