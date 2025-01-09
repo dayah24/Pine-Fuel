@@ -14,7 +14,7 @@
     --second-bg-color: #f2f8f5;
     --text-color: #080808;
     --main-color: #47c94a;
-    --text-color: #ffffff;
+    --input-text-color: #080808; /* Tambahkan variabel untuk warna input */
 }
 
 /* General styling */
