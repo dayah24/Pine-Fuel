@@ -27,10 +27,42 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js')
         .then(registration => {
             console.log('Service Worker terdaftar:', registration);
+
+            // Tampilkan notifikasi saat Service Worker berhasil terdaftar
+            showNotification('Service Worker Terdaftar', 'Notifikasi sekarang aktif!');
         })
         .catch(error => {
             console.error('Pendaftaran Service Worker gagal:', error);
         });
+}
+
+// Fungsi untuk menampilkan notifikasi
+function showNotification(title, body) {
+    if ('Notification' in window && Notification.permission === 'granted') {
+        navigator.serviceWorker.ready.then(registration => {
+            registration.showNotification(title, {
+                body: body,
+                icon: '/icon.png', // Ganti dengan path ikon Anda
+                vibrate: [200, 100, 200],
+                tag: 'general-notification',
+            });
+        });
+    }
+}
+
+// Meminta izin notifikasi
+if ('Notification' in window) {
+    Notification.requestPermission().then(permission => {
+        if (permission === 'granted') {
+            console.log('Izin notifikasi diberikan.');
+        } else if (permission === 'denied') {
+            console.warn('Izin notifikasi ditolak.');
+        } else {
+            console.log('Izin notifikasi belum diputuskan.');
+        }
+    }).catch(error => {
+        console.error('Gagal meminta izin notifikasi:', error);
+    });
 }
 
 // Install Prompt
@@ -94,6 +126,10 @@ if (contactForm) {
         try {
             await addContact(contact);
             alert('Pesan berhasil disimpan!');
+
+            // Tampilkan notifikasi setelah pesan berhasil disimpan
+            showNotification('Pesan Tersimpan', `Pesan dari ${contact.name} berhasil disimpan!`);
+            
             contactForm.reset();
         } catch (error) {
             console.error(error);
