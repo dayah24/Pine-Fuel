@@ -25,6 +25,19 @@
     --input-text-color: #080808; /* Warna teks untuk input dan textarea */
 }
 
+input, textarea {
+    color: var(--input-text-color); /* Gunakan warna teks khusus */
+    background-color: var(--second-bg-color); /* Warna latar tetap */
+    border: 1px solid var(--main-color); /* Border tetap */
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 5px;
+}
+
+textarea {
+    resize: none; /* Opsi jika Anda tidak ingin textarea bisa diubah ukurannya */
+}
+
 /* General styling */
 html {
     font-size: 64%;
