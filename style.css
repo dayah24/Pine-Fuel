@@ -17,6 +17,14 @@
     --input-text-color: #080808; /* Warna input tetap sama */
 }
 
+:root {
+    --bg-color: #000000;
+    --second-bg-color: #f2f8f5;
+    --text-color: #ffffff; /* Warna teks umum */
+    --main-color: #47c94a;
+    --input-text-color: #080808; /* Warna teks untuk input dan textarea */
+}
+
 /* General styling */
 html {
     font-size: 64%;
