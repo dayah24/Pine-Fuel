@@ -59,22 +59,33 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-    // Periksa apakah metode permintaan adalah GET
     if (event.request.method === 'GET') {
         event.respondWith(
             caches.open(CACHE_NAME).then((cache) => {
+                // Cek apakah cache memiliki respons untuk request ini
                 return cache.match(event.request).then((cachedResponse) => {
+                    // Ambil data dari jaringan
                     const fetchPromise = fetch(event.request).then((networkResponse) => {
-                        // Simpan hanya respon GET di cache
-                        cache.put(event.request, networkResponse.clone());
-                        return networkResponse;
+                        if (networkResponse && networkResponse.status === 200) {
+                            // Simpan response ke cache jika statusnya 200
+                            cache.put(event.request, networkResponse.clone());
+                        }
+                        return networkResponse || cachedResponse; // Menggunakan cachedResponse jika networkResponse kosong
+                    }).catch((err) => {
+                        console.error("Fetch gagal:", err);
+                        // Mengembalikan response dari cache jika terjadi kesalahan saat fetch
+                        return cachedResponse || new Response("Network error and no cache available", {
+                            status: 408,
+                            statusText: 'Request Timeout',
+                        });
                     });
+
+                    // Kembalikan response dari cache jika ada
                     return cachedResponse || fetchPromise;
                 });
             })
         );
     } else {
-        // Untuk permintaan non-GET, langsung fetch tanpa caching
         event.respondWith(fetch(event.request));
     }
 });
