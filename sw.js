@@ -64,12 +64,19 @@ self.addEventListener('fetch', (event) => {
         event.respondWith(
             caches.open(CACHE_NAME).then((cache) => {
                 return cache.match(event.request).then((cachedResponse) => {
-                    const fetchPromise = fetch(event.request).then((networkResponse) => {
-                        if (networkResponse && networkResponse.status === 200) {
-                            cache.put(event.request, networkResponse.clone());
-                        }
-                        return networkResponse;
-                    });
+                    const fetchPromise = fetch(event.request)
+                        .then((networkResponse) => {
+                            if (networkResponse && networkResponse.status === 200) {
+                                cache.put(event.request, networkResponse.clone()).catch((error) => {
+                                    console.error('Cache put failed:', error);
+                                });
+                            }
+                            return networkResponse;
+                        })
+                        .catch((error) => {
+                            console.error('Fetch failed:', error);
+                            return caches.match(event.request); // Fallback ke cache jika fetch gagal
+                        });
                     return cachedResponse || fetchPromise;
                 });
             })
