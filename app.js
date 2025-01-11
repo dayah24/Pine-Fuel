@@ -33,11 +33,14 @@ navbarLinks.forEach(link => {
     link.addEventListener('click', setActiveLink);
 });
 
-// Service Worker registration
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').then(reg => {
-        console.log('Service Worker registered:', reg);
-    }).catch(err => console.error('Service Worker registration failed:', err));
+    navigator.serviceWorker.register('/sw.js')
+        .then((registration) => {
+            console.log('Service Worker berhasil didaftarkan:', registration);
+        })
+        .catch((error) => {
+            console.error('Pendaftaran Service Worker gagal:', error);
+        });
 }
 
 let deferredPrompt;
