@@ -1,138 +1,70 @@
-// Hamburger Menu
-const menuIcon = document.getElementById('menu-icon');
-const navbar = document.getElementById('navbar');
+// Import Firebase SDK
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
+import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging.js";
 
-if (menuIcon && navbar) {
-    menuIcon.addEventListener('click', () => {
-        navbar.classList.toggle('active');
-    });
+// Konfigurasi Firebase
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID",
+  measurementId: "YOUR_MEASUREMENT_ID"
+};
 
-    const navLinks = document.querySelectorAll('.navbar a');
-    navLinks.forEach(link => {
-        link.addEventListener('click', () => {
-            navbar.classList.remove('active');
-        });
-    });
+// Inisialisasi Firebase
+const app = initializeApp(firebaseConfig);
+const messaging = getMessaging(app);
 
-    navLinks.forEach(link => {
-        link.addEventListener('click', function () {
-            navLinks.forEach(link => link.classList.remove('active'));
-            this.classList.add('active');
-        });
-    });
-}
-
-// Service Worker
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js')
-        .then(registration => {
-            console.log('Service Worker terdaftar:', registration);
-
-            // Tampilkan notifikasi saat Service Worker berhasil terdaftar
-            showNotification('Service Worker Terdaftar', 'Notifikasi sekarang aktif!');
-        })
-        .catch(error => {
-            console.error('Pendaftaran Service Worker gagal:', error);
-        });
-}
-
-// Fungsi untuk menampilkan notifikasi
-function showNotification(title, body) {
-    if ('Notification' in window && Notification.permission === 'granted') {
-        navigator.serviceWorker.ready.then(registration => {
-            registration.showNotification(title, {
-                body: body,
-                icon: '/icon.png', // Ganti dengan path ikon Anda
-                vibrate: [200, 100, 200],
-                tag: 'general-notification',
-            });
-        });
+// Minta izin untuk notifikasi
+async function requestNotificationPermission() {
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission === "granted") {
+      console.log("Notification permission granted.");
+      // Dapatkan token perangkat
+      const token = await getToken(messaging, { vapidKey: 'YOUR_PUBLIC_VAPID_KEY' });
+      if (token) {
+        console.log("FCM Token:", token);
+        // Simpan token ke server
+        await saveTokenToServer(token);
+      } else {
+        console.warn("Failed to get FCM token.");
+      }
+    } else {
+      console.warn("Notification permission not granted.");
     }
+  } catch (error) {
+    console.error("Error requesting notification permission:", error);
+  }
 }
 
-// Meminta izin notifikasi
-if ('Notification' in window) {
-    Notification.requestPermission().then(permission => {
-        if (permission === 'granted') {
-            console.log('Izin notifikasi diberikan.');
-        } else if (permission === 'denied') {
-            console.warn('Izin notifikasi ditolak.');
-        } else {
-            console.log('Izin notifikasi belum diputuskan.');
-        }
-    }).catch(error => {
-        console.error('Gagal meminta izin notifikasi:', error);
+// Simpan token ke server
+async function saveTokenToServer(token) {
+  try {
+    const response = await fetch('/save-token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token })
     });
+    if (response.ok) {
+      console.log("Token saved to server successfully.");
+    } else {
+      console.error("Failed to save token to server:", response.statusText);
+    }
+  } catch (error) {
+    console.error("Error saving token to server:", error);
+  }
 }
 
-// Install Prompt
-let deferredPrompt;
-
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    const installButton = document.getElementById('installButton');
-    if (installButton) installButton.style.display = 'flex';
+// Tangani notifikasi saat aplikasi sedang aktif
+onMessage(messaging, (payload) => {
+  console.log("Message received. ", payload);
+  const { title, body } = payload.notification;
+  // Tampilkan notifikasi menggunakan Notification API
+  new Notification(title, { body });
 });
 
-const installButton = document.getElementById('installButton');
-if (installButton) {
-    installButton.addEventListener('click', async () => {
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            console.log(`User choice: ${outcome}`);
-            deferredPrompt = null;
-            installButton.style.display = 'none';
-        }
-    });
-}
-
-// IndexedDB
-const dbName = 'contactDB';
-const storeName = 'contacts';
-
-async function openDatabase() {
-    const request = indexedDB.open(dbName, 1);
-    return new Promise((resolve, reject) => {
-        request.onupgradeneeded = (event) => {
-            const db = event.target.result;
-            if (!db.objectStoreNames.contains(storeName)) {
-                db.createObjectStore(storeName, { autoIncrement: true });
-            }
-        };
-        request.onsuccess = (event) => resolve(event.target.result);
-        request.onerror = (event) => reject(event.target.error);
-    });
-}
-
-async function addContact(contact) {
-    const db = await openDatabase();
-    const tx = db.transaction(storeName, 'readwrite');
-    const store = tx.objectStore(storeName);
-    store.add(contact);
-    return tx.complete;
-}
-
-// Form Submission
-const contactForm = document.getElementById('contact-me');
-if (contactForm) {
-    contactForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        const contact = {
-            name: event.target.name.value,
-            email: event.target.email.value,
-        };
-        try {
-            await addContact(contact);
-            alert('Pesan berhasil disimpan!');
-
-            // Tampilkan notifikasi setelah pesan berhasil disimpan
-            showNotification('Pesan Tersimpan', `Pesan dari ${contact.name} berhasil disimpan!`);
-            
-            contactForm.reset();
-        } catch (error) {
-            console.error(error);
-        }
-    });
-}
+// Panggil fungsi untuk meminta izin
+requestNotificationPermission();
