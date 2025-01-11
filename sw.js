@@ -25,7 +25,6 @@ const precachedAssets = [
     '/images/team6.jpg',
 ];
 
-// Install event - Precaching assets
 self.addEventListener('install', (event) => {
     console.log("Service Worker diinstall");
     self.skipWaiting();
@@ -39,7 +38,6 @@ self.addEventListener('install', (event) => {
     );
 });
 
-// Activate event - Cleanup old caches
 self.addEventListener('activate', (event) => {
     console.log("Service Worker diaktifkan");
     event.waitUntil(
@@ -47,7 +45,7 @@ self.addEventListener('activate', (event) => {
             return Promise.all(
                 cacheNames.map((cacheName) => {
                     if (cacheName !== CACHE_NAME) {
-                        console.log(`Menghapus cache lama: ${cacheName}`);
+                        console.log(Menghapus cache lama: ${cacheName});
                         return caches.delete(cacheName);
                     }
                 })
@@ -61,7 +59,6 @@ self.addEventListener('activate', (event) => {
     return self.clients.claim();
 });
 
-// Fetch event - Cache with Network Fallback
 self.addEventListener('fetch', (event) => {
     if (event.request.method === 'GET') {
         event.respondWith(
@@ -82,68 +79,25 @@ self.addEventListener('fetch', (event) => {
     }
 });
 
-// Show Notification Handler
 self.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
-        const { title, body, icon, url } = event.data;
-        showNotification(title, body, icon, url);
+        showNotification();
     }
 });
 
-function showNotification(title = 'Hallo!', body = 'Selamat Datang di Website PineFuel. See the product and check out now!', icon = '/images/image-icon.png', url = 'https://pine-fuel.vercel.app/') {
+function showNotification() {
+    const title = 'Hallo!';
     const options = {
-        body: body,
-        icon: icon,
-        data: { url }
+        body: 'Selamat Datang di Website PineFuel. See the product and check out now!',
+        icon: '/images/image-icon.png',
     };
+
     self.registration.showNotification(title, options);
 }
 
-// Handle Notification Click
 self.addEventListener('notificationclick', (event) => {
-    const url = event.notification.data.url || '/';
     event.notification.close();
     event.waitUntil(
-        clients.matchAll({ type: 'window' }).then((clientList) => {
-            for (let client of clientList) {
-                if (client.url === url && 'focus' in client) {
-                    return client.focus();
-                }
-            }
-            if (clients.openWindow) {
-                return clients.openWindow(url);
-            }
-        })
+        clients.openWindow('https://pine-fuel.vercel.app/') // URL diperbaiki
     );
-});
-
-// Firebase Cloud Messaging Integration (Optional)
-importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js');
-importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging.js');
-
-// Firebase Config
-const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
-};
-
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-
-// Initialize Firebase Messaging
-const messaging = firebase.messaging();
-
-// Handle background notifications
-messaging.onBackgroundMessage((payload) => {
-    console.log('[Service Worker] Received background message:', payload);
-    const notificationTitle = payload.notification.title;
-    const notificationOptions = {
-        body: payload.notification.body,
-        icon: payload.notification.icon,
-    };
-    self.registration.showNotification(notificationTitle, notificationOptions);
 });
