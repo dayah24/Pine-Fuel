@@ -122,7 +122,7 @@ self.addEventListener('install', event => {
   self.addEventListener('notificationclick', event => {
     event.notification.close(); // Menutup notifikasi saat diklik
     event.waitUntil(
-      clients.openWindow('https://pine-fuel.vercel.app') // URL yang akan dibuka saat notifikasi diklik
+      clients.openWindow('https://pine-fuel.vercel.app/') // URL yang akan dibuka saat notifikasi diklik
     );
   });
   
