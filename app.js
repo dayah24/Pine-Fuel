@@ -192,7 +192,7 @@ testGetAllContacts();
 
 // Memeriksa apakah service worker didukung oleh browser
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('https://mufidacv-pwa.vercel.app/sw.js')
+    navigator.serviceWorker.register('https://pine-fuel.vercel.app')
       .then(registration => {
         console.log('Service Worker terdaftar:', registration);
       })
